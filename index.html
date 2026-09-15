@@ -162,7 +162,7 @@
         margin: 10px;
     }
 
-    /* Best score */
+    /* Best record */
 
     #bestScore {
         font-size: 24px;
@@ -267,11 +267,6 @@
 
 let audioContext;
 
-/*
-    Engine now uses multiple oscillators to create
-    a deeper and more realistic engine sound.
-*/
-
 let engineLow;
 let engineMid;
 let engineHigh;
@@ -291,16 +286,10 @@ function startAudio() {
 
     if (soundStarted) {
 
-        /*
-            Some browsers suspend audio after inactivity.
-            Resume it if necessary.
-        */
-
         if (
             audioContext &&
             audioContext.state === "suspended"
         ) {
-
             audioContext.resume();
         }
 
@@ -314,7 +303,7 @@ function startAudio() {
 
 
     /* -----------------------------------------------------
-       LOW ENGINE
+       LOW ENGINE RUMBLE
        ----------------------------------------------------- */
 
     engineLow =
@@ -328,7 +317,7 @@ function startAudio() {
 
     engineLow.frequency.value = 55;
 
-    engineLowGain.gain.value = 0.12;
+    engineLowGain.gain.value = 0.10;
 
 
     engineLow.connect(engineLowGain);
@@ -339,7 +328,7 @@ function startAudio() {
 
 
     /* -----------------------------------------------------
-       MID ENGINE
+       MAIN ENGINE
        ----------------------------------------------------- */
 
     engineMid =
@@ -353,7 +342,7 @@ function startAudio() {
 
     engineMid.frequency.value = 110;
 
-    engineMidGain.gain.value = 0.035;
+    engineMidGain.gain.value = 0.025;
 
 
     engineMid.connect(engineMidGain);
@@ -364,7 +353,7 @@ function startAudio() {
 
 
     /* -----------------------------------------------------
-       HIGH ENGINE
+       HIGH ENGINE HARMONIC
        ----------------------------------------------------- */
 
     engineHigh =
@@ -378,7 +367,7 @@ function startAudio() {
 
     engineHigh.frequency.value = 165;
 
-    engineHighGain.gain.value = 0.015;
+    engineHighGain.gain.value = 0.01;
 
 
     engineHigh.connect(engineHighGain);
@@ -388,10 +377,12 @@ function startAudio() {
     );
 
 
-    /* Start all engine layers */
+    /* Start engine */
 
     engineLow.start();
+
     engineMid.start();
+
     engineHigh.start();
 
 
@@ -400,7 +391,7 @@ function startAudio() {
 
 
 /* =========================================================
-   ENGINE SOUND
+   UPDATE ENGINE SOUND
    ========================================================= */
 
 function updateEngineSound() {
@@ -412,12 +403,6 @@ function updateEngineSound() {
         return;
     }
 
-
-    /*
-        Convert game speed into RPM-like values.
-        The faster the game gets, the higher
-        the engine pitch becomes.
-    */
 
     const rpm =
         55 + speed * 14;
@@ -445,7 +430,7 @@ function updateEngineSound() {
     );
 
 
-    /* Higher engine harmonics */
+    /* Higher harmonic */
 
     engineHigh.frequency.setTargetAtTime(
         rpm * 3,
@@ -454,9 +439,7 @@ function updateEngineSound() {
     );
 
 
-    /*
-        Slight volume increase at higher speeds.
-    */
+    /* Engine volume */
 
     const lowVolume =
         0.10 + speed * 0.003;
@@ -486,6 +469,58 @@ function updateEngineSound() {
         Math.min(highVolume, 0.04),
         now,
         0.08
+    );
+}
+
+
+/* =========================================================
+   STOP ENGINE SOUND
+   ========================================================= */
+
+function stopEngineSound() {
+
+    if (
+        !soundStarted ||
+        !audioContext
+    ) {
+        return;
+    }
+
+
+    const now =
+        audioContext.currentTime;
+
+
+    /*
+        Fade the engine out very quickly
+        when the player crashes.
+    */
+
+    engineLowGain.gain.cancelScheduledValues(now);
+
+    engineMidGain.gain.cancelScheduledValues(now);
+
+    engineHighGain.gain.cancelScheduledValues(now);
+
+
+    engineLowGain.gain.setTargetAtTime(
+        0,
+        now,
+        0.025
+    );
+
+
+    engineMidGain.gain.setTargetAtTime(
+        0,
+        now,
+        0.025
+    );
+
+
+    engineHighGain.gain.setTargetAtTime(
+        0,
+        now,
+        0.025
     );
 }
 
@@ -646,7 +681,7 @@ function playCrashSound() {
     );
 
 
-    /* Extra crash impact */
+    /* Crash impact */
 
     playTone(
         70,
@@ -733,7 +768,7 @@ for (let i = 0; i < 8; i++) {
 
 
 /* =========================================================
-   CONTROLS
+   KEYBOARD CONTROLS
    ========================================================= */
 
 document.addEventListener(
@@ -775,6 +810,9 @@ function moveLeft() {
     startAudio();
 
 
+    if (!gameRunning) return;
+
+
     playerX -= 30;
 
 
@@ -801,6 +839,9 @@ function moveRight() {
     startAudio();
 
 
+    if (!gameRunning) return;
+
+
     playerX += 30;
 
 
@@ -823,7 +864,7 @@ function moveRight() {
 
 
 /* =========================================================
-   MOBILE BUTTONS
+   MOBILE CONTROLS
    ========================================================= */
 
 document.getElementById("left")
@@ -921,6 +962,7 @@ function createEnemy() {
 
         dx:
             (Math.random() * 2 - 1) * 2
+
     });
 }
 
@@ -977,6 +1019,7 @@ function gameLoop() {
 
         line.style.top =
             top + "px";
+
     });
 
 
@@ -985,12 +1028,8 @@ function gameLoop() {
     enemies.forEach(
         (enemy, index) => {
 
-            /* Move down */
-
             enemy.y += speed;
 
-
-            /* Move sideways */
 
             enemy.x += enemy.dx;
 
@@ -1039,6 +1078,8 @@ function gameLoop() {
             ) {
 
                 endGame();
+
+                return;
             }
 
 
@@ -1113,8 +1154,6 @@ setInterval(
             "Score: " + score;
 
 
-        /* Make game faster */
-
         if (score % 50 === 0) {
 
             speed += 0.5;
@@ -1137,7 +1176,16 @@ function endGame() {
     gameRunning = false;
 
 
-    /* Check for new record */
+    /* -----------------------------------------------
+       STOP ENGINE
+       ----------------------------------------------- */
+
+    stopEngineSound();
+
+
+    /* -----------------------------------------------
+       CHECK BEST SCORE
+       ----------------------------------------------- */
 
     if (score > bestScore) {
 
@@ -1151,13 +1199,13 @@ function endGame() {
     }
 
 
-    /* Show final score */
+    /* -----------------------------------------------
+       SHOW SCORES
+       ----------------------------------------------- */
 
     finalScore.textContent =
         "Score: " + score;
 
-
-    /* Show best record */
 
     bestScoreText.textContent =
         "Best: " + bestScore;
@@ -1166,6 +1214,8 @@ function endGame() {
     gameOverScreen.style.display =
         "flex";
 
+
+    /* Crash sound */
 
     playCrashSound();
 }
@@ -1180,6 +1230,41 @@ function restartGame() {
     startAudio();
 
 
+    /* Reset engine volume */
+
+    if (
+        soundStarted &&
+        audioContext
+    ) {
+
+        const now =
+            audioContext.currentTime;
+
+
+        engineLowGain.gain.setTargetAtTime(
+            0.10,
+            now,
+            0.03
+        );
+
+
+        engineMidGain.gain.setTargetAtTime(
+            0.025,
+            now,
+            0.03
+        );
+
+
+        engineHighGain.gain.setTargetAtTime(
+            0.01,
+            now,
+            0.03
+        );
+    }
+
+
+    /* Remove enemies */
+
     enemies.forEach(enemy => {
 
         enemy.element.remove();
@@ -1189,11 +1274,11 @@ function restartGame() {
     enemies = [];
 
 
+    /* Reset game */
+
     score = 0;
 
-
     speed = 5;
-
 
     playerX = 172;
 
