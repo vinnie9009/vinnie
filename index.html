@@ -162,6 +162,16 @@
         margin: 10px;
     }
 
+    /* Best record */
+
+    #bestScore {
+        font-size: 24px;
+        margin: 5px 10px 20px;
+        color: #ffd700;
+        font-weight: bold;
+        text-shadow: 2px 2px #000;
+    }
+
     button {
         padding: 15px 30px;
         border: none;
@@ -218,7 +228,11 @@
 
     <div id="gameOver">
         <h1>GAME OVER</h1>
+
         <div id="finalScore">Score: 0</div>
+
+        <div id="bestScore">Best: 0</div>
+
         <button onclick="restartGame()">RESTART</button>
     </div>
 
@@ -316,6 +330,7 @@ function playMoveSound() {
 /* Score sound */
 
 function playScoreSound() {
+
     playTone(700, 0.08, "sine", 0.04);
 
     setTimeout(() => {
@@ -376,6 +391,7 @@ const player = document.getElementById("player");
 const scoreText = document.getElementById("score");
 const gameOverScreen = document.getElementById("gameOver");
 const finalScore = document.getElementById("finalScore");
+const bestScoreText = document.getElementById("bestScore");
 
 let playerX = 172;
 let score = 0;
@@ -383,6 +399,20 @@ let speed = 5;
 let gameRunning = true;
 let enemies = [];
 let lines = [];
+
+/* =========================================================
+   BEST RECORD
+   ========================================================= */
+
+/* Load the saved best score */
+
+let bestScore = Number(localStorage.getItem("bestScore")) || 0;
+
+/* Show the saved best score */
+
+bestScoreText.textContent =
+    "Best: " + bestScore;
+
 
 const roadWidth = 400;
 const carWidth = 55;
@@ -712,11 +742,37 @@ function endGame() {
 
     gameRunning = false;
 
+
+    /* Check if player got a new record */
+
+    if (score > bestScore) {
+
+        bestScore = score;
+
+        /* Save the new record */
+
+        localStorage.setItem(
+            "bestScore",
+            bestScore
+        );
+    }
+
+
+    /* Show final score */
+
     finalScore.textContent =
         "Score: " + score;
 
+
+    /* Show best record */
+
+    bestScoreText.textContent =
+        "Best: " + bestScore;
+
+
     gameOverScreen.style.display =
         "flex";
+
 
     playCrashSound();
 }
