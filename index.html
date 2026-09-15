@@ -67,7 +67,6 @@
         border-radius: 12px;
         border: 4px solid #111;
         z-index: 10;
-        transition: transform 0.1s;
     }
 
     #player::before {
@@ -141,7 +140,7 @@
         position: absolute;
         inset: 0;
         z-index: 100;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.85);
         align-items: center;
         justify-content: center;
         flex-direction: column;
@@ -192,6 +191,7 @@
         border-radius: 12px;
         font-size: 30px;
         user-select: none;
+        touch-action: manipulation;
     }
 
     @media (min-width: 700px) {
@@ -213,53 +213,94 @@
     <div id="player"></div>
 
     <div id="gameOver">
+
         <h1>GAME OVER</h1>
-        <div id="finalScore">Score: 0</div>
-        <button onclick="restartGame()">RESTART</button>
+
+        <div id="finalScore">
+            Score: 0
+        </div>
+
+        <button
+            id="restartButton"
+            type="button">
+            RESTART
+        </button>
+
     </div>
 
 </div>
 
 <div id="controls">
-    <button class="control" id="left">⬅️</button>
-    <button class="control" id="right">➡️</button>
+
+    <button
+        class="control"
+        id="left"
+        type="button">
+        ⬅️
+    </button>
+
+    <button
+        class="control"
+        id="right"
+        type="button">
+        ➡️
+    </button>
+
 </div>
 
 
 <!-- =====================================================
      MUSIC FILES
-     Put these two files in the same folder as this HTML:
+
+     These files MUST be in the same folder as index.html:
 
      driving-music.mp3
      nikes-on-my-feet.mp3
-
-     Use music you have permission to use.
      ===================================================== -->
 
-<audio id="drivingMusic" loop preload="auto">
-    <source src="driving-music.mp3" type="audio/mpeg">
+<audio
+    id="drivingMusic"
+    loop
+    preload="auto">
+
+    <source
+        src="driving-music.mp3"
+        type="audio/mpeg">
+
 </audio>
 
-<audio id="deathMusic" preload="auto">
-    <source src="nikes-on-my-feet.mp3" type="audio/mpeg">
+
+<audio
+    id="deathMusic"
+    preload="auto">
+
+    <source
+        src="nikes-on-my-feet.mp3"
+        type="audio/mpeg">
+
 </audio>
 
 
 <script>
 
 /* =========================================================
-   SOUND SYSTEM
+   GAME ELEMENTS
    ========================================================= */
 
-let audioContext;
-let engineOscillator;
-let engineGain;
-let soundStarted = false;
+const game =
+    document.getElementById("game");
 
+const player =
+    document.getElementById("player");
 
-/* =========================================================
-   MUSIC
-   ========================================================= */
+const scoreText =
+    document.getElementById("score");
+
+const gameOverScreen =
+    document.getElementById("gameOver");
+
+const finalScore =
+    document.getElementById("finalScore");
 
 const drivingMusic =
     document.getElementById("drivingMusic");
@@ -267,8 +308,169 @@ const drivingMusic =
 const deathMusic =
     document.getElementById("deathMusic");
 
+const leftButton =
+    document.getElementById("left");
 
-function startMusic() {
+const rightButton =
+    document.getElementById("right");
+
+const restartButton =
+    document.getElementById("restartButton");
+
+
+/* =========================================================
+   GAME VARIABLES
+   ========================================================= */
+
+let playerX = 172;
+
+let score = 0;
+
+let speed = 5;
+
+let gameRunning = true;
+
+let enemies = [];
+
+let lines = [];
+
+let animationFrame;
+
+let spawnTimer;
+
+let scoreTimer;
+
+
+/* =========================================================
+   AUDIO VARIABLES
+   ========================================================= */
+
+let audioContext = null;
+
+let engineOscillator = null;
+
+let engineGain = null;
+
+let soundStarted = false;
+
+let audioUnlocked = false;
+
+
+/* =========================================================
+   UNLOCK AUDIO
+   =========================================================
+
+   Browsers such as Safari and Chrome can block audio
+   until the player interacts with the page.
+
+   We unlock BOTH songs during the first interaction.
+   ========================================================= */
+
+async function unlockAudio() {
+
+    if (audioUnlocked) {
+        return;
+    }
+
+    audioUnlocked = true;
+
+
+    /* Web Audio */
+
+    try {
+
+        if (!audioContext) {
+
+            audioContext =
+                new (
+                    window.AudioContext ||
+                    window.webkitAudioContext
+                )();
+
+        }
+
+        if (
+            audioContext.state === "suspended"
+        ) {
+
+            await audioContext.resume();
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Web Audio error:",
+            error
+        );
+
+    }
+
+
+    /*
+       Unlock driving music.
+    */
+
+    try {
+
+        drivingMusic.volume = 0;
+
+        await drivingMusic.play();
+
+        drivingMusic.pause();
+
+        drivingMusic.currentTime = 0;
+
+        drivingMusic.volume = 0.35;
+
+    } catch (error) {
+
+        console.warn(
+            "Driving music unlock failed:",
+            error
+        );
+
+    }
+
+
+    /*
+       Unlock death music.
+    */
+
+    try {
+
+        deathMusic.volume = 0;
+
+        await deathMusic.play();
+
+        deathMusic.pause();
+
+        deathMusic.currentTime = 0;
+
+        deathMusic.volume = 0.5;
+
+    } catch (error) {
+
+        console.warn(
+            "Death music unlock failed:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   START DRIVING MUSIC
+   ========================================================= */
+
+async function startMusic() {
+
+    if (!gameRunning) {
+        return;
+    }
+
 
     /* Stop death music */
 
@@ -277,43 +479,85 @@ function startMusic() {
     deathMusic.currentTime = 0;
 
 
-    /* Start driving music */
-
     drivingMusic.volume = 0.35;
 
-    drivingMusic.play().catch(() => {
-        /*
-           Browser may block audio until the user
-           interacts with the page.
-        */
-    });
+
+    try {
+
+        await drivingMusic.play();
+
+    } catch (error) {
+
+        console.error(
+            "Driving music failed:",
+            error
+        );
+
+    }
+
 }
 
+
+/* =========================================================
+   STOP DRIVING MUSIC
+   ========================================================= */
 
 function stopMusic() {
 
     drivingMusic.pause();
 
     drivingMusic.currentTime = 0;
+
 }
 
 
-function playDeathMusic() {
+/* =========================================================
+   PLAY DEATH MUSIC
+   ========================================================= */
 
-    /* Stop driving music */
+async function playDeathMusic() {
+
+    /*
+       Make absolutely sure driving music is stopped.
+    */
 
     drivingMusic.pause();
 
     drivingMusic.currentTime = 0;
 
 
-    /* Play death-screen music */
+    /*
+       Reset death music.
+    */
+
+    deathMusic.pause();
 
     deathMusic.currentTime = 0;
 
     deathMusic.volume = 0.5;
 
-    deathMusic.play().catch(() => {});
+
+    try {
+
+        await deathMusic.play();
+
+        console.log(
+            "Death music is playing!"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "DEATH MUSIC FAILED:",
+            error
+        );
+
+        console.error(
+            "Make sure nikes-on-my-feet.mp3 is beside index.html."
+        );
+
+    }
+
 }
 
 
@@ -321,44 +565,74 @@ function playDeathMusic() {
    ENGINE SOUND
    ========================================================= */
 
-function startAudio() {
+async function startAudio() {
 
-    if (soundStarted) return;
-
-    audioContext =
-        new (window.AudioContext ||
-        window.webkitAudioContext)();
+    if (soundStarted) {
+        return;
+    }
 
 
-    engineOscillator =
-        audioContext.createOscillator();
+    try {
 
-    engineGain =
-        audioContext.createGain();
+        if (!audioContext) {
 
+            audioContext =
+                new (
+                    window.AudioContext ||
+                    window.webkitAudioContext
+                )();
 
-    engineOscillator.type =
-        "sawtooth";
-
-    engineOscillator.frequency.value =
-        80;
-
-    engineGain.gain.value =
-        0.025;
+        }
 
 
-    engineOscillator.connect(
-        engineGain
-    );
+        if (
+            audioContext.state === "suspended"
+        ) {
 
-    engineGain.connect(
-        audioContext.destination
-    );
+            await audioContext.resume();
+
+        }
 
 
-    engineOscillator.start();
+        engineOscillator =
+            audioContext.createOscillator();
 
-    soundStarted = true;
+        engineGain =
+            audioContext.createGain();
+
+
+        engineOscillator.type =
+            "sawtooth";
+
+        engineOscillator.frequency.value =
+            80;
+
+        engineGain.gain.value =
+            0.025;
+
+
+        engineOscillator.connect(
+            engineGain
+        );
+
+        engineGain.connect(
+            audioContext.destination
+        );
+
+
+        engineOscillator.start();
+
+        soundStarted = true;
+
+    } catch (error) {
+
+        console.warn(
+            "Engine sound failed:",
+            error
+        );
+
+    }
+
 }
 
 
@@ -370,20 +644,21 @@ function stopEngineSound() {
 
     if (
         !soundStarted ||
-        !engineOscillator
+        !engineOscillator ||
+        !audioContext
     ) {
         return;
     }
 
 
-    engineGain.gain.setTargetAtTime(
-        0.001,
-        audioContext.currentTime,
-        0.03
-    );
-
-
     try {
+
+        engineGain.gain.setTargetAtTime(
+            0.001,
+            audioContext.currentTime,
+            0.03
+        );
+
 
         engineOscillator.stop(
             audioContext.currentTime + 0.1
@@ -391,26 +666,33 @@ function stopEngineSound() {
 
     } catch (error) {
 
-        /* Already stopped */
+        console.warn(
+            "Engine stop error:",
+            error
+        );
 
     }
 
 
     engineOscillator = null;
 
+    engineGain = null;
+
     soundStarted = false;
+
 }
 
 
 /* =========================================================
-   ENGINE SOUND UPDATE
+   ENGINE UPDATE
    ========================================================= */
 
 function updateEngineSound() {
 
     if (
         !soundStarted ||
-        !engineOscillator
+        !engineOscillator ||
+        !audioContext
     ) {
         return;
     }
@@ -425,11 +707,12 @@ function updateEngineSound() {
         audioContext.currentTime,
         0.05
     );
+
 }
 
 
 /* =========================================================
-   SHORT SOUND EFFECT
+   SOUND EFFECT
    ========================================================= */
 
 function playTone(
@@ -439,7 +722,12 @@ function playTone(
     volume = 0.08
 ) {
 
-    if (!soundStarted) return;
+    if (
+        !soundStarted ||
+        !audioContext
+    ) {
+        return;
+    }
 
 
     const oscillator =
@@ -449,7 +737,8 @@ function playTone(
         audioContext.createGain();
 
 
-    oscillator.type = type;
+    oscillator.type =
+        type;
 
     oscillator.frequency.value =
         frequency;
@@ -479,11 +768,12 @@ function playTone(
     oscillator.stop(
         audioContext.currentTime + duration
     );
+
 }
 
 
 /* =========================================================
-   MOVEMENT SOUND
+   MOVE SOUND
    ========================================================= */
 
 function playMoveSound() {
@@ -494,6 +784,7 @@ function playMoveSound() {
         "square",
         0.04
     );
+
 }
 
 
@@ -513,7 +804,10 @@ function playScoreSound() {
 
     setTimeout(() => {
 
-        if (soundStarted) {
+        if (
+            soundStarted &&
+            gameRunning
+        ) {
 
             playTone(
                 900,
@@ -525,6 +819,7 @@ function playScoreSound() {
         }
 
     }, 70);
+
 }
 
 
@@ -534,137 +829,115 @@ function playScoreSound() {
 
 function playCrashSound() {
 
-    if (!audioContext) return;
+    if (!audioContext) {
+        return;
+    }
 
 
-    const oscillator =
-        audioContext.createOscillator();
+    try {
 
-    const gain =
-        audioContext.createGain();
+        const oscillator =
+            audioContext.createOscillator();
 
-
-    oscillator.type =
-        "sawtooth";
+        const gain =
+            audioContext.createGain();
 
 
-    oscillator.frequency.setValueAtTime(
-        180,
-        audioContext.currentTime
-    );
+        oscillator.type =
+            "sawtooth";
 
 
-    oscillator.frequency.exponentialRampToValueAtTime(
-        40,
-        audioContext.currentTime + 0.7
-    );
+        oscillator.frequency.setValueAtTime(
+            180,
+            audioContext.currentTime
+        );
 
 
-    gain.gain.setValueAtTime(
-        0.35,
-        audioContext.currentTime
-    );
+        oscillator.frequency.exponentialRampToValueAtTime(
+            40,
+            audioContext.currentTime + 0.7
+        );
 
 
-    gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        audioContext.currentTime + 0.7
-    );
+        gain.gain.setValueAtTime(
+            0.35,
+            audioContext.currentTime
+        );
 
 
-    oscillator.connect(gain);
-
-    gain.connect(
-        audioContext.destination
-    );
-
-
-    oscillator.start();
-
-    oscillator.stop(
-        audioContext.currentTime + 0.7
-    );
+        gain.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioContext.currentTime + 0.7
+        );
 
 
-    /* Crash impact */
+        oscillator.connect(gain);
 
-    const impact =
-        audioContext.createOscillator();
-
-    const impactGain =
-        audioContext.createGain();
+        gain.connect(
+            audioContext.destination
+        );
 
 
-    impact.type =
-        "square";
+        oscillator.start();
 
-    impact.frequency.value =
-        70;
-
-
-    impactGain.gain.setValueAtTime(
-        0.2,
-        audioContext.currentTime
-    );
+        oscillator.stop(
+            audioContext.currentTime + 0.7
+        );
 
 
-    impactGain.gain.exponentialRampToValueAtTime(
-        0.001,
-        audioContext.currentTime + 0.4
-    );
+        /* Impact sound */
+
+        const impact =
+            audioContext.createOscillator();
+
+        const impactGain =
+            audioContext.createGain();
 
 
-    impact.connect(impactGain);
+        impact.type =
+            "square";
 
-    impactGain.connect(
-        audioContext.destination
-    );
+        impact.frequency.value =
+            70;
 
 
-    impact.start();
+        impactGain.gain.setValueAtTime(
+            0.2,
+            audioContext.currentTime
+        );
 
-    impact.stop(
-        audioContext.currentTime + 0.4
-    );
+
+        impactGain.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioContext.currentTime + 0.4
+        );
+
+
+        impact.connect(
+            impactGain
+        );
+
+        impactGain.connect(
+            audioContext.destination
+        );
+
+
+        impact.start();
+
+        impact.stop(
+            audioContext.currentTime + 0.4
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Crash sound failed:",
+            error
+        );
+
+    }
+
 }
-
-
-/* =========================================================
-   GAME VARIABLES
-   ========================================================= */
-
-const game =
-    document.getElementById("game");
-
-const player =
-    document.getElementById("player");
-
-const scoreText =
-    document.getElementById("score");
-
-const gameOverScreen =
-    document.getElementById("gameOver");
-
-const finalScore =
-    document.getElementById("finalScore");
-
-
-let playerX = 172;
-
-let score = 0;
-
-let speed = 5;
-
-let gameRunning = true;
-
-let enemies = [];
-
-let lines = [];
-
-
-const roadWidth = 400;
-
-const carWidth = 55;
 
 
 /* =========================================================
@@ -685,29 +958,104 @@ for (let i = 0; i < 8; i++) {
     game.appendChild(line);
 
     lines.push(line);
+
 }
 
 
 /* =========================================================
-   CONTROLS
+   MOVE LEFT
+   ========================================================= */
+
+async function moveLeft() {
+
+    await unlockAudio();
+
+    await startAudio();
+
+    await startMusic();
+
+
+    if (!gameRunning) {
+        return;
+    }
+
+
+    playerX -= 30;
+
+
+    const minimum =
+        game.clientWidth * 0.08;
+
+
+    if (playerX < minimum) {
+        playerX = minimum;
+    }
+
+
+    player.style.left =
+        playerX + "px";
+
+
+    playMoveSound();
+
+}
+
+
+/* =========================================================
+   MOVE RIGHT
+   ========================================================= */
+
+async function moveRight() {
+
+    await unlockAudio();
+
+    await startAudio();
+
+    await startMusic();
+
+
+    if (!gameRunning) {
+        return;
+    }
+
+
+    playerX += 30;
+
+
+    const maximum =
+        game.clientWidth -
+        55 -
+        game.clientWidth * 0.08;
+
+
+    if (playerX > maximum) {
+        playerX = maximum;
+    }
+
+
+    player.style.left =
+        playerX + "px";
+
+
+    playMoveSound();
+
+}
+
+
+/* =========================================================
+   KEYBOARD CONTROLS
    ========================================================= */
 
 document.addEventListener(
     "keydown",
     function(event) {
 
-        startAudio();
-
-        startMusic();
-
-
-        if (!gameRunning) return;
-
-
         if (
             event.key === "ArrowLeft" ||
             event.key.toLowerCase() === "a"
         ) {
+
+            event.preventDefault();
 
             moveLeft();
 
@@ -719,6 +1067,8 @@ document.addEventListener(
             event.key.toLowerCase() === "d"
         ) {
 
+            event.preventDefault();
+
             moveRight();
 
         }
@@ -728,151 +1078,69 @@ document.addEventListener(
 
 
 /* =========================================================
-   MOVE LEFT
-   ========================================================= */
-
-function moveLeft() {
-
-    startAudio();
-
-    startMusic();
-
-
-    playerX -= 30;
-
-
-    if (playerX < 38) {
-
-        playerX = 38;
-
-    }
-
-
-    player.style.left =
-        playerX + "px";
-
-
-    playMoveSound();
-}
-
-
-/* =========================================================
-   MOVE RIGHT
-   ========================================================= */
-
-function moveRight() {
-
-    startAudio();
-
-    startMusic();
-
-
-    playerX += 30;
-
-
-    if (
-        playerX >
-        roadWidth -
-        carWidth -
-        38
-    ) {
-
-        playerX =
-            roadWidth -
-            carWidth -
-            38;
-
-    }
-
-
-    player.style.left =
-        playerX + "px";
-
-
-    playMoveSound();
-}
-
-
-/* =========================================================
    MOBILE CONTROLS
    ========================================================= */
 
-document.getElementById("left")
-    .addEventListener(
-        "touchstart",
-        function(e) {
+leftButton.addEventListener(
+    "pointerdown",
+    function(event) {
 
-            e.preventDefault();
+        event.preventDefault();
 
-            startAudio();
+        moveLeft();
 
-            startMusic();
-
-            moveLeft();
-
-        }
-    );
+    }
+);
 
 
-document.getElementById("right")
-    .addEventListener(
-        "touchstart",
-        function(e) {
+rightButton.addEventListener(
+    "pointerdown",
+    function(event) {
 
-            e.preventDefault();
+        event.preventDefault();
 
-            startAudio();
+        moveRight();
 
-            startMusic();
-
-            moveRight();
-
-        }
-    );
-
-
-document.getElementById("left")
-    .addEventListener(
-        "click",
-        function() {
-
-            startAudio();
-
-            startMusic();
-
-            moveLeft();
-
-        }
-    );
-
-
-document.getElementById("right")
-    .addEventListener(
-        "click",
-        function() {
-
-            startAudio();
-
-            startMusic();
-
-            moveRight();
-
-        }
-    );
+    }
+);
 
 
 /* =========================================================
-   ENEMY CARS
+   COLLISION
+   ========================================================= */
+
+function collision(a, b) {
+
+    const aRect =
+        a.getBoundingClientRect();
+
+    const bRect =
+        b.getBoundingClientRect();
+
+
+    return !(
+        aRect.bottom < bRect.top ||
+        aRect.top > bRect.bottom ||
+        aRect.right < bRect.left ||
+        aRect.left > bRect.right
+    );
+
+}
+
+
+/* =========================================================
+   CREATE ENEMY
    ========================================================= */
 
 function createEnemy() {
 
-    if (!gameRunning) return;
+    if (!gameRunning) {
+        return;
+    }
 
 
     const enemy =
         document.createElement("div");
-
 
     enemy.className =
         "enemy";
@@ -897,7 +1165,6 @@ function createEnemy() {
     enemy.style.left =
         randomLane + "px";
 
-
     enemy.style.top =
         "-120px";
 
@@ -917,28 +1184,7 @@ function createEnemy() {
             (Math.random() * 2 - 1) * 2
 
     });
-}
 
-
-/* =========================================================
-   COLLISION
-   ========================================================= */
-
-function collision(a, b) {
-
-    const aRect =
-        a.getBoundingClientRect();
-
-    const bRect =
-        b.getBoundingClientRect();
-
-
-    return !(
-        aRect.bottom < bRect.top ||
-        aRect.top > bRect.bottom ||
-        aRect.right < bRect.left ||
-        aRect.left > bRect.right
-    );
 }
 
 
@@ -948,10 +1194,12 @@ function collision(a, b) {
 
 function gameLoop() {
 
-    if (!gameRunning) return;
+    if (!gameRunning) {
+        return;
+    }
 
 
-    /* Move road */
+    /* Move road lines */
 
     lines.forEach(line => {
 
@@ -965,9 +1213,7 @@ function gameLoop() {
 
 
         if (top > 700) {
-
             top = -90;
-
         }
 
 
@@ -977,97 +1223,107 @@ function gameLoop() {
     });
 
 
-    /* Move enemies */
+    /* Move enemies backwards */
 
-    enemies.forEach(
-        (enemy, index) => {
+    for (
+        let i = enemies.length - 1;
+        i >= 0;
+        i--
+    ) {
 
-            enemy.y += speed;
-
-            enemy.x += enemy.dx;
-
-
-            if (enemy.x < 38) {
-
-                enemy.x = 38;
-
-                enemy.dx *= -1;
-
-            }
+        const enemy =
+            enemies[i];
 
 
-            if (
-                enemy.x >
-                roadWidth -
-                carWidth -
-                38
-            ) {
+        enemy.y += speed;
 
-                enemy.x =
-                    roadWidth -
-                    carWidth -
-                    38;
-
-                enemy.dx *= -1;
-
-            }
+        enemy.x += enemy.dx;
 
 
-            enemy.element.style.top =
-                enemy.y + "px";
+        if (enemy.x < 38) {
 
+            enemy.x = 38;
 
-            enemy.element.style.left =
-                enemy.x + "px";
-
-
-            /* Crash */
-
-            if (
-                collision(
-                    player,
-                    enemy.element
-                )
-            ) {
-
-                endGame();
-
-            }
-
-
-            /* Remove enemy */
-
-            if (enemy.y > 750) {
-
-                enemy.element.remove();
-
-                enemies.splice(
-                    index,
-                    1
-                );
-
-
-                score += 10;
-
-
-                scoreText.textContent =
-                    "Score: " + score;
-
-
-                playScoreSound();
-
-            }
+            enemy.dx *= -1;
 
         }
-    );
+
+
+        if (
+            enemy.x >
+            game.clientWidth -
+            55 -
+            38
+        ) {
+
+            enemy.x =
+                game.clientWidth -
+                55 -
+                38;
+
+            enemy.dx *= -1;
+
+        }
+
+
+        enemy.element.style.top =
+            enemy.y + "px";
+
+
+        enemy.element.style.left =
+            enemy.x + "px";
+
+
+        /* Check crash */
+
+        if (
+            collision(
+                player,
+                enemy.element
+            )
+        ) {
+
+            endGame();
+
+            return;
+
+        }
+
+
+        /* Enemy passed */
+
+        if (enemy.y > 750) {
+
+            enemy.element.remove();
+
+            enemies.splice(
+                i,
+                1
+            );
+
+
+            score += 10;
+
+
+            scoreText.textContent =
+                "Score: " + score;
+
+
+            playScoreSound();
+
+        }
+
+    }
 
 
     updateEngineSound();
 
 
-    requestAnimationFrame(
-        gameLoop
-    );
+    animationFrame =
+        requestAnimationFrame(
+            gameLoop
+        );
+
 }
 
 
@@ -1075,58 +1331,80 @@ function gameLoop() {
    SPAWN ENEMIES
    ========================================================= */
 
-setInterval(
-    function() {
+spawnTimer =
+    setInterval(
+        function() {
 
-        if (gameRunning) {
+            if (gameRunning) {
+                createEnemy();
+            }
 
-            createEnemy();
-
-        }
-
-    },
-    1200
-);
+        },
+        1200
+    );
 
 
 /* =========================================================
-   SCORE / DIFFICULTY
+   SCORE
    ========================================================= */
 
-setInterval(
-    function() {
+scoreTimer =
+    setInterval(
+        function() {
 
-        if (!gameRunning) return;
-
-
-        score++;
-
-
-        scoreText.textContent =
-            "Score: " + score;
+            if (!gameRunning) {
+                return;
+            }
 
 
-        if (score % 50 === 0) {
+            score++;
 
-            speed += 0.5;
 
-        }
+            scoreText.textContent =
+                "Score: " + score;
 
-    },
-    1000
-);
+
+            if (score % 50 === 0) {
+
+                speed += 0.5;
+
+            }
+
+        },
+        1000
+    );
 
 
 /* =========================================================
    GAME OVER
    ========================================================= */
 
-function endGame() {
+async function endGame() {
 
-    if (!gameRunning) return;
+    if (!gameRunning) {
+        return;
+    }
 
 
     gameRunning = false;
+
+
+    /* Stop game loop */
+
+    cancelAnimationFrame(
+        animationFrame
+    );
+
+
+    /* Stop timers */
+
+    clearInterval(
+        spawnTimer
+    );
+
+    clearInterval(
+        scoreTimer
+    );
 
 
     /* Stop engine */
@@ -1149,32 +1427,48 @@ function endGame() {
         "flex";
 
 
-    /* Play crash sound */
+    /* Crash sound */
 
     playCrashSound();
 
 
     /*
-       Start death music after crash.
-       This is where your legally obtained
-       nikes-on-my-feet.mp3 will play.
+       Play the death music immediately.
+       Because the audio was unlocked when the
+       player first interacted with the game,
+       this is much more reliable on Safari/Chrome.
     */
 
-    setTimeout(() => {
+    await playDeathMusic();
 
-        playDeathMusic();
-
-    }, 500);
 }
 
 
 /* =========================================================
-   RESTART
+   RESTART GAME
    ========================================================= */
 
-function restartGame() {
+async function restartGame() {
 
-    /* Stop all music */
+    /* Stop old animation */
+
+    cancelAnimationFrame(
+        animationFrame
+    );
+
+
+    /* Stop timers */
+
+    clearInterval(
+        spawnTimer
+    );
+
+    clearInterval(
+        scoreTimer
+    );
+
+
+    /* Stop music */
 
     stopMusic();
 
@@ -1183,61 +1477,152 @@ function restartGame() {
     deathMusic.currentTime = 0;
 
 
-    /* Stop old engine */
+    /* Stop engine */
 
     stopEngineSound();
 
 
-    /* Remove enemies */
+    /* Remove all enemies */
 
-    enemies.forEach(
-        enemy => {
+    enemies.forEach(enemy => {
 
-            enemy.element.remove();
+        enemy.element.remove();
 
-        }
-    );
+    });
 
 
     enemies = [];
 
 
-    /* Reset values */
+    /* Reset game */
 
     score = 0;
 
     speed = 5;
 
-    playerX = 172;
+    gameRunning = true;
 
+
+    /* Reset player */
+
+    playerX = 172;
 
     player.style.left =
         playerX + "px";
 
 
+    /* Reset score */
+
     scoreText.textContent =
         "Score: 0";
 
+
+    /* Hide game over */
 
     gameOverScreen.style.display =
         "none";
 
 
-    gameRunning = true;
+    /* Restart audio */
+
+    await unlockAudio();
+
+    await startAudio();
+
+    await startMusic();
 
 
-    /* Start fresh engine */
+    /* Restart timers */
 
-    startAudio();
+    spawnTimer =
+        setInterval(
+            function() {
+
+                if (gameRunning) {
+                    createEnemy();
+                }
+
+            },
+            1200
+        );
 
 
-    /* Start driving music */
+    scoreTimer =
+        setInterval(
+            function() {
 
-    startMusic();
+                if (!gameRunning) {
+                    return;
+                }
 
+
+                score++;
+
+                scoreText.textContent =
+                    "Score: " + score;
+
+
+                if (score % 50 === 0) {
+                    speed += 0.5;
+                }
+
+            },
+            1000
+        );
+
+
+    /* Restart game loop */
 
     gameLoop();
+
 }
+
+
+/* =========================================================
+   RESTART BUTTON
+   ========================================================= */
+
+restartButton.addEventListener(
+    "click",
+    function() {
+
+        restartGame();
+
+    }
+);
+
+
+/* =========================================================
+   FIRST INTERACTION
+
+   Unlock audio as soon as the player touches/clicks
+   the game or presses a key.
+   ========================================================= */
+
+document.addEventListener(
+    "pointerdown",
+    function() {
+
+        unlockAudio();
+
+    },
+    {
+        once: true
+    }
+);
+
+
+document.addEventListener(
+    "keydown",
+    function() {
+
+        unlockAudio();
+
+    },
+    {
+        once: true
+    }
+);
 
 
 /* =========================================================
@@ -1249,7 +1634,4 @@ gameLoop();
 </script>
 
 </body>
-</html> CarCrashGame/
-├── index.html
-├── driving-music.mp3
-└── nikes-on-my-feet.mp3
+</html>
