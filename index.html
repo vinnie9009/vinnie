@@ -338,7 +338,10 @@ function createEnemy() {
     enemies.push({
         element: enemy,
         x: randomLane,
-        y: -120
+        y: -120,
+
+        // Random sideways movement
+        dx: (Math.random() * 2 - 1) * 2
     });
 }
 
@@ -382,9 +385,26 @@ function gameLoop() {
 
     enemies.forEach((enemy, index) => {
 
+        // Move enemy downward
         enemy.y += speed;
 
+        // Move enemy sideways
+        enemy.x += enemy.dx;
+
+        // Keep enemy inside the road
+        if (enemy.x < 38) {
+            enemy.x = 38;
+            enemy.dx *= -1;
+        }
+
+        if (enemy.x > roadWidth - carWidth - 38) {
+            enemy.x = roadWidth - carWidth - 38;
+            enemy.dx *= -1;
+        }
+
+        // Update enemy position
         enemy.element.style.top = enemy.y + "px";
+        enemy.element.style.left = enemy.x + "px";
 
         /* Crash */
 
