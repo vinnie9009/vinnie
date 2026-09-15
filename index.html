@@ -55,9 +55,6 @@ body {
         );
 }
 
-
-/* Road edge */
-
 #road::before,
 #road::after {
     content: "";
@@ -95,7 +92,7 @@ body {
 
 
 /* =========================================================
-   CAR BASE
+   CARS
    ========================================================= */
 
 #player,
@@ -128,7 +125,6 @@ body {
         0 7px 10px rgba(0,0,0,0.7),
         inset 3px 0 4px rgba(255,255,255,0.2),
         inset -3px 0 5px rgba(0,0,0,0.3);
-
 }
 
 
@@ -147,12 +143,11 @@ body {
 
     transition:
         transform 0.1s ease;
-
 }
 
 
 /* =========================================================
-   WINDSHIELD
+   WINDOWS
    ========================================================= */
 
 #player::before,
@@ -187,49 +182,6 @@ body {
 
         inset -4px -4px 6px
         rgba(0,0,0,0.35);
-
-}
-
-
-/* Windshield reflection */
-
-#player::after,
-.enemy::after {
-
-    content: "";
-
-    position: absolute;
-
-    width: 20px;
-    height: 34px;
-
-    left: 12px;
-    top: 13px;
-
-    background:
-        linear-gradient(
-            110deg,
-            rgba(255,255,255,0.4),
-            transparent 55%
-        );
-
-    border-radius: 5px;
-
-    pointer-events: none;
-
-}
-
-
-/* =========================================================
-   ROOF / REAR WINDOW DETAIL
-   ========================================================= */
-
-#player,
-.enemy {
-
-    --roof-color:
-        rgba(0,0,0,0.15);
-
 }
 
 
@@ -260,11 +212,7 @@ body {
         1px 1px 2px #000;
 
     z-index: -1;
-
 }
-
-
-/* Front wheels */
 
 .wheel.left {
     left: -8px;
@@ -276,9 +224,6 @@ body {
     top: 19px;
 }
 
-
-/* Rear wheels */
-
 .wheel.left.rear {
     left: -8px;
     top: 68px;
@@ -288,11 +233,6 @@ body {
     right: -8px;
     top: 68px;
 }
-
-
-/* =========================================================
-   WHEEL RIMS
-   ========================================================= */
 
 .wheel::after {
 
@@ -312,12 +252,11 @@ body {
 
     box-shadow:
         inset 1px 0 #ddd;
-
 }
 
 
 /* =========================================================
-   HEADLIGHTS
+   LIGHTS
    ========================================================= */
 
 .headlight {
@@ -346,7 +285,6 @@ body {
         rgba(255,240,150,0.8);
 
     z-index: 2;
-
 }
 
 .headlight.left {
@@ -356,11 +294,6 @@ body {
 .headlight.right {
     right: 5px;
 }
-
-
-/* =========================================================
-   TAILLIGHTS
-   ========================================================= */
 
 .taillight {
 
@@ -382,7 +315,6 @@ body {
 
     box-shadow:
         0 0 5px rgba(255,0,0,0.7);
-
 }
 
 .taillight.left {
@@ -395,38 +327,7 @@ body {
 
 
 /* =========================================================
-   BUMPER
-   ========================================================= */
-
-.bumper {
-
-    position: absolute;
-
-    left: 3px;
-    right: 3px;
-
-    bottom: -3px;
-
-    height: 9px;
-
-    background:
-        linear-gradient(
-            to bottom,
-            #333,
-            #080808
-        );
-
-    border-radius:
-        0 0 8px 8px;
-
-    border-top: 2px solid
-        rgba(255,255,255,0.15);
-
-}
-
-
-/* =========================================================
-   SIDE MIRRORS
+   MIRRORS
    ========================================================= */
 
 .mirror {
@@ -450,7 +351,6 @@ body {
     border-radius: 3px;
 
     z-index: 2;
-
 }
 
 .mirror.left {
@@ -463,7 +363,7 @@ body {
 
 
 /* =========================================================
-   DOOR LINES
+   DOORS
    ========================================================= */
 
 .door-line {
@@ -477,7 +377,6 @@ body {
 
     background:
         rgba(0,0,0,0.35);
-
 }
 
 .door-line.left {
@@ -487,11 +386,6 @@ body {
 .door-line.right {
     right: 8px;
 }
-
-
-/* =========================================================
-   DOOR HANDLES
-   ========================================================= */
 
 .door-handle {
 
@@ -505,7 +399,6 @@ body {
     border-radius: 2px;
 
     top: 51px;
-
 }
 
 .door-handle.left {
@@ -537,7 +430,6 @@ body {
     border-radius: 4px;
 
     pointer-events: none;
-
 }
 
 
@@ -566,7 +458,36 @@ body {
 
     box-shadow:
         0 2px 3px #000;
+}
 
+
+/* =========================================================
+   BUMPER
+   ========================================================= */
+
+.bumper {
+
+    position: absolute;
+
+    left: 3px;
+    right: 3px;
+
+    bottom: -3px;
+
+    height: 9px;
+
+    background:
+        linear-gradient(
+            to bottom,
+            #333,
+            #080808
+        );
+
+    border-radius:
+        0 0 8px 8px;
+
+    border-top:
+        2px solid rgba(255,255,255,0.15);
 }
 
 
@@ -588,7 +509,6 @@ body {
 
     text-shadow:
         2px 2px #000;
-
 }
 
 
@@ -613,7 +533,6 @@ body {
     justify-content: center;
 
     flex-direction: column;
-
 }
 
 #gameOver h1 {
@@ -626,7 +545,6 @@ body {
 
     text-shadow:
         3px 3px #000;
-
 }
 
 #finalScore {
@@ -634,13 +552,7 @@ body {
     font-size: 24px;
 
     margin: 10px;
-
 }
-
-
-/* =========================================================
-   BEST SCORE
-   ========================================================= */
 
 #bestScore {
 
@@ -655,7 +567,6 @@ body {
 
     text-shadow:
         2px 2px #000;
-
 }
 
 
@@ -682,14 +593,10 @@ button {
     font-weight: bold;
 
     cursor: pointer;
-
 }
 
 button:hover {
-
-    background:
-        #19a947;
-
+    background: #19a947;
 }
 
 
@@ -712,7 +619,6 @@ button:hover {
     gap: 30px;
 
     z-index: 200;
-
 }
 
 .control {
@@ -733,7 +639,6 @@ button:hover {
     font-size: 30px;
 
     user-select: none;
-
 }
 
 @media (min-width: 700px) {
@@ -747,9 +652,7 @@ button:hover {
 </style>
 </head>
 
-
 <body>
-
 
 <div id="game">
 
@@ -758,6 +661,9 @@ button:hover {
     <div id="score">
         Score: 0
     </div>
+
+
+    <!-- PLAYER CAR -->
 
     <div id="player">
 
@@ -790,6 +696,8 @@ button:hover {
 
     </div>
 
+
+    <!-- GAME OVER -->
 
     <div id="gameOver">
 
@@ -851,33 +759,41 @@ let soundStarted = false;
 
 
 /* =========================================================
-   START AUDIO
+   START / RESTART ENGINE SOUND
    ========================================================= */
 
 function startAudio() {
 
-    if (soundStarted) {
+    if (
+        soundStarted &&
+        audioContext
+    ) {
 
         if (
-            audioContext &&
             audioContext.state === "suspended"
         ) {
-
             audioContext.resume();
-
         }
 
         return;
+    }
+
+
+    if (
+        !audioContext ||
+        audioContext.state === "closed"
+    ) {
+
+        audioContext =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
 
     }
 
 
-    audioContext =
-        new (
-            window.AudioContext ||
-            window.webkitAudioContext
-        )();
-
+    /* LOW ENGINE */
 
     engineLow =
         audioContext.createOscillator();
@@ -903,6 +819,8 @@ function startAudio() {
     );
 
 
+    /* MAIN ENGINE */
+
     engineMid =
         audioContext.createOscillator();
 
@@ -926,6 +844,8 @@ function startAudio() {
         audioContext.destination
     );
 
+
+    /* HIGH ENGINE */
 
     engineHigh =
         audioContext.createOscillator();
@@ -951,9 +871,12 @@ function startAudio() {
     );
 
 
+    /* START */
+
     engineLow.start();
     engineMid.start();
     engineHigh.start();
+
 
     soundStarted = true;
 
@@ -961,7 +884,7 @@ function startAudio() {
 
 
 /* =========================================================
-   ENGINE SOUND
+   UPDATE ENGINE SOUND
    ========================================================= */
 
 function updateEngineSound() {
@@ -970,9 +893,7 @@ function updateEngineSound() {
         !soundStarted ||
         !audioContext
     ) {
-
         return;
-
     }
 
 
@@ -1034,7 +955,7 @@ function updateEngineSound() {
 
 
 /* =========================================================
-   STOP ENGINE
+   STOP ENGINE COMPLETELY
    ========================================================= */
 
 function stopEngineSound() {
@@ -1043,15 +964,15 @@ function stopEngineSound() {
         !soundStarted ||
         !audioContext
     ) {
-
         return;
-
     }
 
 
     const now =
         audioContext.currentTime;
 
+
+    /* Fade out immediately */
 
     engineLowGain.gain.cancelScheduledValues(now);
     engineMidGain.gain.cancelScheduledValues(now);
@@ -1061,20 +982,58 @@ function stopEngineSound() {
     engineLowGain.gain.setTargetAtTime(
         0,
         now,
-        0.025
+        0.015
     );
 
     engineMidGain.gain.setTargetAtTime(
         0,
         now,
-        0.025
+        0.015
     );
 
     engineHighGain.gain.setTargetAtTime(
         0,
         now,
-        0.025
+        0.015
     );
+
+
+    /*
+       Completely stop the oscillators.
+       This prevents the engine from
+       continuing after GAME OVER.
+    */
+
+    setTimeout(() => {
+
+        try {
+            engineLow.stop();
+        } catch (e) {}
+
+        try {
+            engineMid.stop();
+        } catch (e) {}
+
+        try {
+            engineHigh.stop();
+        } catch (e) {}
+
+
+        try {
+            engineLow.disconnect();
+            engineMid.disconnect();
+            engineHigh.disconnect();
+
+            engineLowGain.disconnect();
+            engineMidGain.disconnect();
+            engineHighGain.disconnect();
+
+        } catch (e) {}
+
+    }, 80);
+
+
+    soundStarted = false;
 
 }
 
@@ -1090,7 +1049,12 @@ function playTone(
     volume = 0.08
 ) {
 
-    if (!soundStarted) return;
+    if (
+        !soundStarted ||
+        !audioContext
+    ) {
+        return;
+    }
 
 
     const oscillator =
@@ -1128,6 +1092,7 @@ function playTone(
 
     oscillator.start();
 
+
     oscillator.stop(
         audioContext.currentTime +
         duration
@@ -1137,7 +1102,7 @@ function playTone(
 
 
 /* =========================================================
-   SOUND EFFECTS
+   MOVEMENT SOUND
    ========================================================= */
 
 function playMoveSound() {
@@ -1151,6 +1116,10 @@ function playMoveSound() {
 
 }
 
+
+/* =========================================================
+   SCORE SOUND
+   ========================================================= */
 
 function playScoreSound() {
 
@@ -1176,10 +1145,23 @@ function playScoreSound() {
 }
 
 
+/* =========================================================
+   CRASH SOUND
+   ========================================================= */
+
 function playCrashSound() {
 
-    if (!soundStarted) return;
+    if (
+        !audioContext
+    ) {
+        return;
+    }
 
+
+    /*
+       Crash sound is deliberately independent
+       of the engine sound.
+    */
 
     const oscillator =
         audioContext.createOscillator();
@@ -1225,16 +1207,53 @@ function playCrashSound() {
 
     oscillator.start();
 
+
     oscillator.stop(
         audioContext.currentTime + 0.7
     );
 
 
-    playTone(
-        70,
-        0.4,
-        "square",
-        0.2
+    /* Impact */
+
+    const impact =
+        audioContext.createOscillator();
+
+    const impactGain =
+        audioContext.createGain();
+
+
+    impact.type =
+        "square";
+
+    impact.frequency.value =
+        70;
+
+
+    impactGain.gain.setValueAtTime(
+        0.2,
+        audioContext.currentTime
+    );
+
+
+    impactGain.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + 0.4
+    );
+
+
+    impact.connect(
+        impactGain
+    );
+
+    impactGain.connect(
+        audioContext.destination
+    );
+
+
+    impact.start();
+
+    impact.stop(
+        audioContext.currentTime + 0.4
     );
 
 }
@@ -1322,7 +1341,7 @@ for (
 
 
 /* =========================================================
-   KEYBOARD
+   KEYBOARD CONTROLS
    ========================================================= */
 
 document.addEventListener(
@@ -1372,9 +1391,7 @@ function moveLeft() {
 
 
     if (playerX < 38) {
-
         playerX = 38;
-
     }
 
 
@@ -1388,8 +1405,12 @@ function moveLeft() {
 
     setTimeout(() => {
 
-        player.style.transform =
-            "rotate(0deg)";
+        if (gameRunning) {
+
+            player.style.transform =
+                "rotate(0deg)";
+
+        }
 
     }, 100);
 
@@ -1438,8 +1459,12 @@ function moveRight() {
 
     setTimeout(() => {
 
-        player.style.transform =
-            "rotate(0deg)";
+        if (gameRunning) {
+
+            player.style.transform =
+                "rotate(0deg)";
+
+        }
 
     }, 100);
 
@@ -1502,7 +1527,7 @@ document
 
 
 /* =========================================================
-   CREATE ENEMY
+   ENEMY CARS
    ========================================================= */
 
 function createEnemy() {
@@ -1536,12 +1561,11 @@ function createEnemy() {
     enemy.style.left =
         randomLane + "px";
 
-
     enemy.style.top =
         "-120px";
 
 
-    /* Random car colors */
+    /* Random colors */
 
     const colors = [
 
@@ -1567,7 +1591,7 @@ function createEnemy() {
     );
 
 
-    /* Add car details */
+    /* Car details */
 
     enemy.innerHTML = `
 
@@ -1666,9 +1690,7 @@ function gameLoop() {
 
 
         if (top > 700) {
-
             top = -90;
-
         }
 
 
@@ -1717,11 +1739,10 @@ function gameLoop() {
             enemy.element.style.top =
                 enemy.y + "px";
 
+
             enemy.element.style.left =
                 enemy.x + "px";
 
-
-            /* Slight movement */
 
             enemy.element.style.transform =
                 `rotate(${enemy.dx * 1.2}deg)`;
@@ -1743,7 +1764,7 @@ function gameLoop() {
             }
 
 
-            /* Remove */
+            /* Remove enemy */
 
             if (enemy.y > 750) {
 
@@ -1788,9 +1809,7 @@ setInterval(
     function() {
 
         if (gameRunning) {
-
             createEnemy();
-
         }
 
     },
@@ -1837,18 +1856,25 @@ function endGame() {
     if (!gameRunning) return;
 
 
+    /* Stop the game FIRST */
+
     gameRunning = false;
 
+
+    /*
+       Stop engine completely.
+       No engine sound remains
+       behind the Game Over screen.
+    */
 
     stopEngineSound();
 
 
-    if (
-        score > bestScore
-    ) {
+    /* Best score */
+
+    if (score > bestScore) {
 
         bestScore = score;
-
 
         localStorage.setItem(
             "bestScore",
@@ -1858,17 +1884,22 @@ function endGame() {
     }
 
 
+    /* Scores */
+
     finalScore.textContent =
         "Score: " + score;
-
 
     bestScoreText.textContent =
         "Best: " + bestScore;
 
 
+    /* Show Game Over */
+
     gameOverScreen.style.display =
         "flex";
 
+
+    /* Play crash sound */
 
     playCrashSound();
 
@@ -1881,38 +1912,14 @@ function endGame() {
 
 function restartGame() {
 
+    /*
+       Create a brand-new engine.
+    */
+
     startAudio();
 
 
-    if (
-        soundStarted &&
-        audioContext
-    ) {
-
-        const now =
-            audioContext.currentTime;
-
-
-        engineLowGain.gain.setTargetAtTime(
-            0.10,
-            now,
-            0.03
-        );
-
-        engineMidGain.gain.setTargetAtTime(
-            0.025,
-            now,
-            0.03
-        );
-
-        engineHighGain.gain.setTargetAtTime(
-            0.01,
-            now,
-            0.03
-        );
-
-    }
-
+    /* Remove enemies */
 
     enemies.forEach(enemy => {
 
@@ -1923,6 +1930,8 @@ function restartGame() {
 
     enemies = [];
 
+
+    /* Reset */
 
     score = 0;
 
@@ -1949,6 +1958,8 @@ function restartGame() {
 
     gameRunning = true;
 
+
+    /* Start game again */
 
     gameLoop();
 
