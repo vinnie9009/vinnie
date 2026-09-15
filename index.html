@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Car Game</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: #222;
+            overflow: hidden;
+            font-family: Arial;
+        }
+
+        #game {
+            width: 400px;
+            height: 600px;
+            background: #555;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+            border: 5px solid white;
+        }
+
+        #car {
+            width: 50px;
+            height: 90px;
+            background: red;
+            position: absolute;
+            bottom: 30px;
+            left: 175px;
+            border-radius: 10px;
+        }
+
+        .line {
+            width: 10px;
+            height: 80px;
+            background: white;
+            position: absolute;
+            left: 195px;
+        }
+
+        #score {
+            color: white;
+            text-align: center;
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="score">Score: 0</div>
+
+    <div id="game">
+        <div class="line" style="top: 0px;"></div>
+        <div class="line" style="top: 150px;"></div>
+        <div class="line" style="top: 300px;"></div>
+        <div class="line" style="top: 450px;"></div>
+
+        <div id="car"></div>
+    </div>
+
+    <script>
+        const car = document.getElementById("car");
+
+        let carX = 175;
+        let score = 0;
+
+        document.addEventListener("keydown", function(event) {
+
+            if (event.key === "ArrowLeft" && carX > 10) {
+                carX -= 10;
+            }
+
+            if (event.key === "ArrowRight" && carX < 340) {
+                carX += 10;
+            }
+
+            car.style.left = carX + "px";
+        });
+
+        setInterval(function() {
+            score++;
+            document.getElementById("score").textContent =
+                "Score: " + score;
+        }, 100);
+    </script>
+
+</body>
+</html>
