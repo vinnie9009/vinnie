@@ -240,16 +240,21 @@ let engineOscillator;
 let engineGain;
 let soundStarted = false;
 
+
 /* Start audio after the player's first interaction */
 
 function startAudio() {
 
     if (soundStarted) return;
 
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    audioContext =
+        new (window.AudioContext || window.webkitAudioContext)();
 
-    engineOscillator = audioContext.createOscillator();
-    engineGain = audioContext.createGain();
+    engineOscillator =
+        audioContext.createOscillator();
+
+    engineGain =
+        audioContext.createGain();
 
     engineOscillator.type = "sawtooth";
 
@@ -258,12 +263,53 @@ function startAudio() {
     engineGain.gain.value = 0.025;
 
     engineOscillator.connect(engineGain);
+
     engineGain.connect(audioContext.destination);
 
     engineOscillator.start();
 
     soundStarted = true;
 }
+
+
+/* =========================================================
+   STOP ENGINE SOUND
+   ========================================================= */
+
+function stopEngineSound() {
+
+    if (!soundStarted || !engineOscillator) return;
+
+    /*
+       Fade the engine out quickly instead of cutting
+       it off instantly.
+    */
+
+    engineGain.gain.setTargetAtTime(
+        0.001,
+        audioContext.currentTime,
+        0.03
+    );
+
+    /*
+       Stop the oscillator shortly after the fade.
+    */
+
+    try {
+
+        engineOscillator.stop(
+            audioContext.currentTime + 0.1
+        );
+
+    } catch (error) {
+        // Oscillator may already be stopped
+    }
+
+    engineOscillator = null;
+
+    soundStarted = false;
+}
+
 
 /* Engine sound */
 
@@ -280,19 +326,32 @@ function updateEngineSound() {
     );
 }
 
+
 /* Short sound effect */
 
-function playTone(frequency, duration, type = "square", volume = 0.08) {
+function playTone(
+    frequency,
+    duration,
+    type = "square",
+    volume = 0.08
+) {
 
     if (!soundStarted) return;
 
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
+    const oscillator =
+        audioContext.createOscillator();
+
+    const gain =
+        audioContext.createGain();
 
     oscillator.type = type;
+
     oscillator.frequency.value = frequency;
 
-    gain.gain.setValueAtTime(volume, audioContext.currentTime);
+    gain.gain.setValueAtTime(
+        volume,
+        audioContext.currentTime
+    );
 
     gain.gain.exponentialRampToValueAtTime(
         0.001,
@@ -300,37 +359,70 @@ function playTone(frequency, duration, type = "square", volume = 0.08) {
     );
 
     oscillator.connect(gain);
+
     gain.connect(audioContext.destination);
 
     oscillator.start();
 
-    oscillator.stop(audioContext.currentTime + duration);
+    oscillator.stop(
+        audioContext.currentTime + duration
+    );
 }
+
 
 /* Movement sound */
 
 function playMoveSound() {
-    playTone(350, 0.08, "square", 0.04);
+
+    playTone(
+        350,
+        0.08,
+        "square",
+        0.04
+    );
 }
+
 
 /* Score sound */
 
 function playScoreSound() {
-    playTone(700, 0.08, "sine", 0.04);
+
+    playTone(
+        700,
+        0.08,
+        "sine",
+        0.04
+    );
 
     setTimeout(() => {
-        playTone(900, 0.1, "sine", 0.04);
+
+        playTone(
+            900,
+            0.1,
+            "sine",
+            0.04
+        );
+
     }, 70);
 }
+
 
 /* Crash sound */
 
 function playCrashSound() {
 
-    if (!soundStarted) return;
+    /*
+       The engine has already been stopped by endGame().
+       Crash sounds are still allowed to play.
+    */
 
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
+    if (!audioContext) return;
+
+    const oscillator =
+        audioContext.createOscillator();
+
+    const gain =
+        audioContext.createGain();
 
     oscillator.type = "sawtooth";
 
@@ -355,15 +447,57 @@ function playCrashSound() {
     );
 
     oscillator.connect(gain);
+
     gain.connect(audioContext.destination);
 
     oscillator.start();
 
-    oscillator.stop(audioContext.currentTime + 0.7);
+    oscillator.stop(
+        audioContext.currentTime + 0.7
+    );
 
     /* Extra crash impact */
 
-    playTone(70, 0.4, "square", 0.2);
+    playCrashImpact();
+}
+
+
+/* Separate crash impact so it still works
+   after the engine has been stopped */
+
+function playCrashImpact() {
+
+    if (!audioContext) return;
+
+    const oscillator =
+        audioContext.createOscillator();
+
+    const gain =
+        audioContext.createGain();
+
+    oscillator.type = "square";
+
+    oscillator.frequency.value = 70;
+
+    gain.gain.setValueAtTime(
+        0.2,
+        audioContext.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + 0.4
+    );
+
+    oscillator.connect(gain);
+
+    gain.connect(audioContext.destination);
+
+    oscillator.start();
+
+    oscillator.stop(
+        audioContext.currentTime + 0.4
+    );
 }
 
 
@@ -371,20 +505,35 @@ function playCrashSound() {
    GAME VARIABLES
    ========================================================= */
 
-const game = document.getElementById("game");
-const player = document.getElementById("player");
-const scoreText = document.getElementById("score");
-const gameOverScreen = document.getElementById("gameOver");
-const finalScore = document.getElementById("finalScore");
+const game =
+    document.getElementById("game");
+
+const player =
+    document.getElementById("player");
+
+const scoreText =
+    document.getElementById("score");
+
+const gameOverScreen =
+    document.getElementById("gameOver");
+
+const finalScore =
+    document.getElementById("finalScore");
 
 let playerX = 172;
+
 let score = 0;
+
 let speed = 5;
+
 let gameRunning = true;
+
 let enemies = [];
+
 let lines = [];
 
 const roadWidth = 400;
+
 const carWidth = 55;
 
 
@@ -394,11 +543,13 @@ const carWidth = 55;
 
 for (let i = 0; i < 8; i++) {
 
-    const line = document.createElement("div");
+    const line =
+        document.createElement("div");
 
     line.className = "line";
 
-    line.style.top = (i * 100 - 100) + "px";
+    line.style.top =
+        (i * 100 - 100) + "px";
 
     game.appendChild(line);
 
@@ -410,27 +561,34 @@ for (let i = 0; i < 8; i++) {
    CONTROLS
    ========================================================= */
 
-document.addEventListener("keydown", function(event) {
+document.addEventListener(
+    "keydown",
+    function(event) {
 
-    startAudio();
+        startAudio();
 
-    if (!gameRunning) return;
+        if (!gameRunning) return;
 
-    if (
-        event.key === "ArrowLeft" ||
-        event.key.toLowerCase() === "a"
-    ) {
-        moveLeft();
+        if (
+            event.key === "ArrowLeft" ||
+            event.key.toLowerCase() === "a"
+        ) {
+
+            moveLeft();
+
+        }
+
+        if (
+            event.key === "ArrowRight" ||
+            event.key.toLowerCase() === "d"
+        ) {
+
+            moveRight();
+
+        }
+
     }
-
-    if (
-        event.key === "ArrowRight" ||
-        event.key.toLowerCase() === "d"
-    ) {
-        moveRight();
-    }
-
-});
+);
 
 
 function moveLeft() {
@@ -440,10 +598,13 @@ function moveLeft() {
     playerX -= 30;
 
     if (playerX < 38) {
+
         playerX = 38;
+
     }
 
-    player.style.left = playerX + "px";
+    player.style.left =
+        playerX + "px";
 
     playMoveSound();
 }
@@ -455,51 +616,69 @@ function moveRight() {
 
     playerX += 30;
 
-    if (playerX > roadWidth - carWidth - 38) {
-        playerX = roadWidth - carWidth - 38;
+    if (
+        playerX >
+        roadWidth - carWidth - 38
+    ) {
+
+        playerX =
+            roadWidth - carWidth - 38;
+
     }
 
-    player.style.left = playerX + "px";
+    player.style.left =
+        playerX + "px";
 
     playMoveSound();
 }
 
 
-/* Mobile buttons */
+/* =========================================================
+   MOBILE BUTTONS
+   ========================================================= */
 
-document.getElementById("left").addEventListener(
-    "touchstart",
-    function(e) {
+document.getElementById("left")
+    .addEventListener(
+        "touchstart",
+        function(e) {
 
-        e.preventDefault();
+            e.preventDefault();
 
-        startAudio();
+            startAudio();
 
-        moveLeft();
-    }
-);
+            moveLeft();
 
-document.getElementById("right").addEventListener(
-    "touchstart",
-    function(e) {
+        }
+    );
 
-        e.preventDefault();
 
-        startAudio();
+document.getElementById("right")
+    .addEventListener(
+        "touchstart",
+        function(e) {
 
-        moveRight();
-    }
-);
+            e.preventDefault();
 
-document.getElementById("left").addEventListener(
-    "click",
-    moveLeft
-);
+            startAudio();
 
-document.getElementById("right").addEventListener(
-    "click",
-    moveRight
-);
+            moveRight();
+
+        }
+    );
+
+
+document.getElementById("left")
+    .addEventListener(
+        "click",
+        moveLeft
+    );
+
+
+document.getElementById("right")
+    .addEventListener(
+        "click",
+        moveRight
+    );
 
 
 /* =========================================================
@@ -510,18 +689,30 @@ function createEnemy() {
 
     if (!gameRunning) return;
 
-    const enemy = document.createElement("div");
+    const enemy =
+        document.createElement("div");
 
     enemy.className = "enemy";
 
-    const lanes = [55, 172, 289];
+    const lanes = [
+        55,
+        172,
+        289
+    ];
 
     const randomLane =
-        lanes[Math.floor(Math.random() * lanes.length)];
+        lanes[
+            Math.floor(
+                Math.random() *
+                lanes.length
+            )
+        ];
 
-    enemy.style.left = randomLane + "px";
+    enemy.style.left =
+        randomLane + "px";
 
-    enemy.style.top = "-120px";
+    enemy.style.top =
+        "-120px";
 
     game.appendChild(enemy);
 
@@ -533,9 +724,9 @@ function createEnemy() {
 
         y: -120,
 
-        /* Random sideways movement */
+        dx:
+            (Math.random() * 2 - 1) * 2
 
-        dx: (Math.random() * 2 - 1) * 2
     });
 }
 
@@ -546,8 +737,11 @@ function createEnemy() {
 
 function collision(a, b) {
 
-    const aRect = a.getBoundingClientRect();
-    const bRect = b.getBoundingClientRect();
+    const aRect =
+        a.getBoundingClientRect();
+
+    const bRect =
+        b.getBoundingClientRect();
 
     return !(
         aRect.bottom < bRect.top ||
@@ -566,91 +760,112 @@ function gameLoop() {
 
     if (!gameRunning) return;
 
+
     /* Move road */
 
     lines.forEach(line => {
 
-        let top = parseFloat(line.style.top);
+        let top =
+            parseFloat(line.style.top);
 
         top += speed;
 
         if (top > 700) {
+
             top = -90;
+
         }
 
-        line.style.top = top + "px";
+        line.style.top =
+            top + "px";
+
     });
 
 
     /* Move enemies */
 
-    enemies.forEach((enemy, index) => {
+    enemies.forEach(
+        (enemy, index) => {
 
-        /* Move down */
+            /* Move down */
 
-        enemy.y += speed;
-
-
-        /* Move sideways */
-
-        enemy.x += enemy.dx;
+            enemy.y += speed;
 
 
-        /* Keep enemy inside road */
+            /* Move sideways */
 
-        if (enemy.x < 38) {
+            enemy.x += enemy.dx;
 
-            enemy.x = 38;
 
-            enemy.dx *= -1;
+            /* Keep enemy inside road */
+
+            if (enemy.x < 38) {
+
+                enemy.x = 38;
+
+                enemy.dx *= -1;
+
+            }
+
+
+            if (
+                enemy.x >
+                roadWidth - carWidth - 38
+            ) {
+
+                enemy.x =
+                    roadWidth -
+                    carWidth -
+                    38;
+
+                enemy.dx *= -1;
+
+            }
+
+
+            enemy.element.style.top =
+                enemy.y + "px";
+
+            enemy.element.style.left =
+                enemy.x + "px";
+
+
+            /* Crash */
+
+            if (
+                collision(
+                    player,
+                    enemy.element
+                )
+            ) {
+
+                endGame();
+
+            }
+
+
+            /* Remove enemy */
+
+            if (enemy.y > 750) {
+
+                enemy.element.remove();
+
+                enemies.splice(
+                    index,
+                    1
+                );
+
+                score += 10;
+
+                scoreText.textContent =
+                    "Score: " + score;
+
+                playScoreSound();
+
+            }
+
         }
-
-
-        if (
-            enemy.x >
-            roadWidth - carWidth - 38
-        ) {
-
-            enemy.x =
-                roadWidth - carWidth - 38;
-
-            enemy.dx *= -1;
-        }
-
-
-        enemy.element.style.top =
-            enemy.y + "px";
-
-        enemy.element.style.left =
-            enemy.x + "px";
-
-
-        /* Crash */
-
-        if (collision(player, enemy.element)) {
-
-            endGame();
-
-        }
-
-
-        /* Remove enemy */
-
-        if (enemy.y > 750) {
-
-            enemy.element.remove();
-
-            enemies.splice(index, 1);
-
-            score += 10;
-
-            scoreText.textContent =
-                "Score: " + score;
-
-            playScoreSound();
-        }
-
-    });
+    );
 
 
     /* Update engine */
@@ -666,40 +881,46 @@ function gameLoop() {
    SPAWN ENEMIES
    ========================================================= */
 
-setInterval(function() {
+setInterval(
+    function() {
 
-    if (gameRunning) {
+        if (gameRunning) {
 
-        createEnemy();
+            createEnemy();
 
-    }
+        }
 
-}, 1200);
+    },
+    1200
+);
 
 
 /* =========================================================
    SCORE / DIFFICULTY
    ========================================================= */
 
-setInterval(function() {
+setInterval(
+    function() {
 
-    if (!gameRunning) return;
+        if (!gameRunning) return;
 
-    score++;
+        score++;
 
-    scoreText.textContent =
-        "Score: " + score;
+        scoreText.textContent =
+            "Score: " + score;
 
 
-    /* Make game faster */
+        /* Make game faster */
 
-    if (score % 50 === 0) {
+        if (score % 50 === 0) {
 
-        speed += 0.5;
+            speed += 0.5;
 
-    }
+        }
 
-}, 1000);
+    },
+    1000
+);
 
 
 /* =========================================================
@@ -712,11 +933,29 @@ function endGame() {
 
     gameRunning = false;
 
+
+    /*
+       STOP ENGINE MUSIC
+       =================
+
+       The engine fades out and stops
+       when the player crashes.
+    */
+
+    stopEngineSound();
+
+
     finalScore.textContent =
         "Score: " + score;
 
     gameOverScreen.style.display =
         "flex";
+
+
+    /*
+       Play the crash sound after
+       stopping the engine.
+    */
 
     playCrashSound();
 }
@@ -728,15 +967,28 @@ function endGame() {
 
 function restartGame() {
 
-    startAudio();
+    /*
+       Make sure any old engine sound
+       is completely stopped.
+    */
 
-    enemies.forEach(enemy => {
+    stopEngineSound();
 
-        enemy.element.remove();
 
-    });
+    /* Remove old enemies */
+
+    enemies.forEach(
+        enemy => {
+
+            enemy.element.remove();
+
+        }
+    );
 
     enemies = [];
+
+
+    /* Reset game */
 
     score = 0;
 
@@ -744,16 +996,28 @@ function restartGame() {
 
     playerX = 172;
 
+
     player.style.left =
         playerX + "px";
+
 
     scoreText.textContent =
         "Score: 0";
 
+
     gameOverScreen.style.display =
         "none";
 
+
     gameRunning = true;
+
+
+    /*
+       Start a fresh engine sound.
+    */
+
+    startAudio();
+
 
     gameLoop();
 }
